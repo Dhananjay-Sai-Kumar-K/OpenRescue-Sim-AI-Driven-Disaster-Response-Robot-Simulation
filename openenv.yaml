@@ -1,0 +1,39 @@
+name: "RescueBot-v1"
+version: "1.0.0"
+description: "Disaster Response / Search & Rescue simulation for AI-driven robots."
+author: "Antigravity AI Assistant & Team"
+type: "simulation"
+framework: "fastapi"
+
+tasks:
+  - id: "easy"
+    name: "Target Navigation"
+    difficulty: "easy"
+    description: "Navigate safely to the target waypoint."
+  - id: "medium"
+    name: "Victim Discovery"
+    difficulty: "medium"
+    description: "Locate and move victims to safety points."
+  - id: "hard"
+    name: "Rescue & Extraction"
+    difficulty: "hard"
+    description: "Multi-stage extraction in hazardous zones."
+
+observation_space:
+  type: "structured"
+  schema: "env/models.py:RescueObservation"
+
+action_space:
+  type: "structured"
+  schema: "env/models.py:RescueAction"
+
+reward_space:
+  type: "continuous"
+  min: -1.0
+  max: 2.0
+  schema: "env/models.py:RescueReward"
+
+baseline_performance:
+  easy: 0.85
+  medium: 0.55
+  hard: 0.20
