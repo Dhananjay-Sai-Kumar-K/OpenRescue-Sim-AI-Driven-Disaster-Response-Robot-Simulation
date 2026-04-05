@@ -1,3 +1,12 @@
+---
+title: RescueBot Disaster Response Simulation
+emoji: 🛡️
+colorFrom: blue
+colorTo: red
+sdk: docker
+app_port: 7860
+---
+
 # 🛡️ RescueBot: A High-Fidelity RL Disaster Response Environment
 
 **RescueBot** is a state-of-the-art disaster-relief simulation built on the **OpenEnv** standard. It features a Gymnasium-compatible environment where AI agents must navigate a hazardous grid, locate survivors (Victims), avoid obstacles, and survive heat zones to complete missions.
