@@ -22,8 +22,8 @@ def train_hard():
     )
     
     # Hard takes much longer (40k steps)
-    print("Training for 40,000 steps...")
-    model.learn(total_timesteps=40000)
+    print("Training for 400,000 steps...")
+    model.learn(total_timesteps=400000)
     
     os.makedirs("models", exist_ok=True)
     model.save("models/rescue_bot_ppo_hard")

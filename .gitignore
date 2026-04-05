@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary state files
+.env_state.json
+.env_state.json.tmp
+body.json
+test_step_output.json
+env/base.py.fixed_state.txt
+
+# Local logs (keep the folder, ignore content if too large, but for hackathon we might want them)
+# logs/*.csv
+
+# OS generated files
+.DS_Store
+Thumbs.db

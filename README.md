@@ -1,61 +1,69 @@
-# RescueBot - OpenEnv Disaster Simulation
+# 🛡️ RescueBot: A High-Fidelity RL Disaster Response Environment
 
-**RescueBot** is a high-fidelity disaster response environment built for the Meta OpenEnv hackathon. It challenges AI agents to navigate unstable and hazardous terrain, locate thermal signatures (victims), and perform rescue extractions safely.
+**RescueBot** is a state-of-the-art disaster-relief simulation built on the **OpenEnv** standard. It features a Gymnasium-compatible environment where AI agents must navigate a hazardous grid, locate survivors (Victims), avoid obstacles, and survive heat zones to complete missions.
 
-## 📋 Problem Domain: Search & Rescue Robotics
-Working in disaster zones is a real-world challenge where robots must navigate unpredictable debris, avoid heat/fire hazards, and manage physical payloads (victims and debris) while strictly monitoring their internal battery and sensor integrity. This environment simulates these constraints using a robust physical grid, providing a highly pragmatic testbed for AI-driven operation planning.
+## ✨ Key Features
 
-## 🚀 Tasks
-RescueBot supports 3 tiers of difficulty. Each runs via deterministic programmatic graders producing a `0.0` - `1.0` score:
-1. **Easy (`easy`) - Target Navigation:** The robot is tasked with moving from the entry point to the Safe Zone without taking collision damage. Measures path efficiency and safety.
-2. **Medium (`medium`) - Victim Locating:** Introduces hidden victims. The robot must use sensors to locate a target and transport them to the Safe Zone. Scored by retrieval ratio and robot integrity.
-3. **Hard (`hard`) - Hazardous Extraction:** Introduces intense fire zones and dense debris blocking paths. The robot must extract multiple victims while managing high risk of failure due to hull integrity loss. 
+- **🎯 Intelligent Navigation (GPS Compass):** Unlike simple radar-based maps, RescueBot provides the agent with a dedicated "Compass" observation. This sensor dynamically recalibrates its target from *Survivors* to the *Safe Zone* as soon as a rescue is in progress.
+- **🛡️ Robust Physics Engine:** Includes a custom **Stuck Detector** that penalizes repetitive, blocked movements, teaching the AI to actively problem-solve around obstacles.
+- **🔥 Realistic Environmental Hazards:** Features dynamic Heat Zones with strict boundaries and integrity-based damage, requiring high-level path planning.
+- **📊 Real-time Dashboard:** A built-in FastAPI visualizer that renders the simulation at 60FPS, including thermal heat signatures and robot cargo states.
+- **🚀 Stable Baselines3 Ready:** Fully compatible with PPO, DQN, and SAC reinforcement learning algorithms.
 
-## 🧠 State & Action Spaces
-The environment fully conforms to standard OpenEnv typed Python interfaces via Pydantic.
+## 📂 Project Structure
 
-### Observation Space
-A structured JSON containing:
-- `robot`: Position, heading, battery level, hull integrity, and carrying status.
-- `sensors`: Simulated 360-degree radar array providing `angle`, `distance`, and object `type` (obstacle, victim, fire).
-- `current_task` & `time_remaining`.
+- `/env`: Core environment logic (`base.py`), Pydantic models, and Gymnasium wrapper.
+- `/baseline`: Training scripts for Easy, Medium, and Hard task levels.
+- `/models`: Stored PPO weights (`.zip`) and performance metrics.
+- `main.py`: The visualization server and API backend.
+- `openenv.yaml`: Standardized environment metadata for competition graders.
 
-### Action Space
-A structured command block containing:
-- `action_type`: One of `"move"`, `"rotate"`, `"grab"`, `"drop"`, `"extinguish"`, or `"scan"`.
-- `value`: Float for speed (-0.5 to 0.5) or rotational radians.
-- `target_id`: Optional string targeting interactive items (like a victim ID).
+## 🚀 Getting Started
 
-### Reward Function
-The environment produces **dense, continuous rewards** on each step:
-- Positive gradients for closing distance to the immediate goal or successfully extracting victims.
-- Negative penalties for collisions, boundary touches, or extreme damage received near fire zones.
-
-## ⚙️ Setup & Validation
-
-### Running the Docker Backend (Hugging Face Space)
-The application acts as a FastAPI server complying with the required OpenEnv structure:
+### 1. Installation
+Install the required dependencies:
 ```bash
-docker build -t openenv-agent .
-docker run -p 7860:7860 openenv-agent
+pip install -r requirements.txt
 ```
-Then visit `http://localhost:7860/visualize` to see the live HTML canvas dashboard.
 
-### OpenEnv Spec Validation
+### 2. Visualize in Real-time
+Start the heartbeat of the mission—the visualization dashboard:
 ```bash
-pip install openenv-core
-openenv validate
+python main.py
 ```
-*(Validation completely passes the schema specs mapped in `openenv.yaml`.)*
+Open your browser at `http://localhost:8000` to view the live mission theater.
 
-## 🤖 Baseline Agent (`inference.py`)
-The baseline inference script connects an LLM agent to the environment. It runs all three tasks, parsing the structured observations into prompt history, and strictly outputting the standard `[START]`, `[STEP]`, and `[END]` evaluation logs.
-
+### 3. Run Inference
+To see a pre-trained agent in action (Medium Task):
 ```bash
-# Ensure you set required keys:
-export API_BASE_URL="https://api.openai.com/v1"
-export MODEL_NAME="gpt-4"
-export HF_TOKEN="your-api-key"
-
-python inference.py
+python -m baseline.test_agent medium
 ```
+
+## 🧠 Training your Agent
+
+RescueBot supports three levels of progressive difficulty. To train an agent from scratch:
+
+**Easy Mode (Navigation):**
+```bash
+python -m baseline.train_rl
+```
+
+**Medium Mode (Search & Rescue):**
+```bash
+python -m baseline.train_medium
+```
+
+**Hard Mode (Debris Clearing & Hazardous Extraction):**
+```bash
+python -m baseline.train_hard
+```
+
+## ⚖️ Competition Compliance
+
+This environment was built to strictly follow the **OpenEnv Specification**.
+- **Action Space:** 5-dimensional continuous control box.
+- **Observation Space:** 16-dimensional status and sensory vector.
+- **Reward Structure:** Dense progress rewards with discrete mission milestone bonuses (+15.0 for rescues).
+
+---
+*Developed for the Meta Hackathon - Final Submission.*

@@ -132,14 +132,36 @@ async def visualize(session_id: str = "default"):
                         // Draw Fire
                         state.fire_zones.forEach(f => {{
                             ctx.fillStyle = 'rgba(255, 87, 34, 0.5)';
-                            ctx.beginPath(); ctx.arc(f.pos.x*scale, f.pos.y*scale, 1.0*scale, 0, Math.PI*2); ctx.fill();
+                            ctx.beginPath(); ctx.arc(f.pos.x*scale, f.pos.y*scale, 1.5*scale, 0, Math.PI*2); ctx.fill();
                         }});
+
+                        // Draw Static Obstacles
+                        ctx.fillStyle = '#555';
+                        if (state.obstacles) {{
+                            state.obstacles.forEach(obs => {{
+                                ctx.fillRect(obs.x*scale-15, obs.y*scale-15, 30, 30);
+                            }});
+                        }}
+
+                        // Draw Moveable Debris
+                        if (state.debris) {{
+                            state.debris.forEach(d => {{
+                                if (d.id !== state.carrying) {{
+                                    ctx.fillStyle = '#9e9e9e';
+                                    ctx.fillRect(d.pos.x*scale-12, d.pos.y*scale-12, 24, 24);
+                                    ctx.strokeStyle = '#616161';
+                                    ctx.strokeRect(d.pos.x*scale-12, d.pos.y*scale-12, 24, 24);
+                                }}
+                            }});
+                        }}
 
                         // Draw Victims
                         state.victims.forEach(v => {{
-                            if(!v.rescued) {{
+                            if(!v.rescued && v.id !== state.carrying) {{
                                 ctx.fillStyle = '#ffeb3b';
-                                ctx.fillRect(v.pos.x*scale-5, v.pos.y*scale-5, 10, 10);
+                                ctx.beginPath();
+                                ctx.arc(v.pos.x*scale, v.pos.y*scale, 8, 0, Math.PI*2);
+                                ctx.fill();
                             }}
                         }});
 
@@ -147,11 +169,27 @@ async def visualize(session_id: str = "default"):
                         ctx.save();
                         ctx.translate(state.robot.x*scale, state.robot.y*scale);
                         ctx.rotate(state.heading);
+                        
+                        // Shadow
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                        
+                        // Body
                         ctx.fillStyle = '#2196f3';
-                        ctx.fillRect(-10, -10, 20, 20);
-                        // Direction head
+                        ctx.fillRect(-12, -12, 24, 24);
+                        
+                        // Cargo Indicator (if carrying)
+                        if (state.carrying) {{
+                            ctx.fillStyle = state.carrying.startsWith('v') ? '#ffeb3b' : '#9e9e9e';
+                            ctx.fillRect(-4, -4, 8, 8);
+                            ctx.strokeStyle = 'white';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(-4, -4, 8, 8);
+                        }}
+
+                        // Head/Direction
                         ctx.fillStyle = 'white';
-                        ctx.fillRect(5, -2, 8, 4);
+                        ctx.fillRect(6, -3, 9, 6);
                         ctx.restore();
 
                         // Update UI

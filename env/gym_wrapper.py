@@ -25,10 +25,11 @@ class RescueBotGym(gym.Env):
         )
         
         # Observation space: 8 lidar sensors + x, y, heading, battery, integrity, carrying
+        # New 16-dim observation: 8 radar + 2 compass + 6 robot state
         self.observation_space = spaces.Box(
-            low=0.0, 
+            low=-1.0, 
             high=1.0, 
-            shape=(14,), 
+            shape=(16,), 
             dtype=np.float32
         )
 
@@ -88,9 +89,14 @@ class RescueBotGym(gym.Env):
         return self._preprocess_obs(obs_pydantic), float(reward), done, False, {}
 
     def _preprocess_obs(self, obs):
-        lidar = [s.distance / 15.0 for s in obs.sensors] # Normalize by max possible scan dist
+        # 8 radar sensors (0..1)
+        lidar = [s.distance / 15.0 for s in obs.sensors[:8]]
         
-        # Robot state
+        # 2 Compass sensors (Target GPS)
+        target_dist = obs.sensors[8].distance / self.internal_env.grid_size
+        target_angle = obs.sensors[9].distance / math.pi
+        
+        # 6 Robot state metrics (-1..1)
         pos_x = obs.robot.position.x / self.internal_env.grid_size
         pos_y = obs.robot.position.y / self.internal_env.grid_size
         heading = obs.robot.heading / (2 * math.pi)
@@ -98,5 +104,5 @@ class RescueBotGym(gym.Env):
         integrity = obs.robot.hull_integrity
         carrying = 1.0 if obs.robot.carrying else 0.0
         
-        arr = np.array(lidar + [pos_x, pos_y, heading, battery, integrity, carrying], dtype=np.float32)
-        return np.clip(arr, 0.0, 1.0)
+        arr = np.array(lidar + [target_dist, target_angle, pos_x, pos_y, heading, battery, integrity, carrying], dtype=np.float32)
+        return np.clip(arr, -1.0, 1.0)

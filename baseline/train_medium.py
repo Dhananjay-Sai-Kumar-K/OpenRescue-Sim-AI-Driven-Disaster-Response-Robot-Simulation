@@ -22,8 +22,8 @@ def train_medium():
     )
     
     # Medium takes longer to learn (100k steps for safety)
-    print("Training for 100,000 steps...")
-    model.learn(total_timesteps=100000)
+    print("Training for 500,000 steps...")
+    model.learn(total_timesteps=500000)
     
     os.makedirs("models", exist_ok=True)
     model.save("models/rescue_bot_ppo_medium")
