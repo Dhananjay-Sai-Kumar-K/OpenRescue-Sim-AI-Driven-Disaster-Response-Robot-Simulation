@@ -15,9 +15,187 @@ class ActionRequest(BaseModel):
     action: RescueAction
     session_id: str = "default"
 
-@app.get("/")
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {"status": "ok", "env": "RescueBot-v1", "active_sessions": list(envs.keys())}
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>OpenRescue-Sim | Disaster Response AI</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
+            
+            :root {{
+                --primary: #4F46E5;
+                --primary-hover: #4338CA;
+                --accent: #F43F5E;
+                --bg-dark: #0F172A;
+                --glass-bg: rgba(30, 41, 59, 0.7);
+                --glass-border: rgba(255, 255, 255, 0.1);
+                --text-main: #F8FAFC;
+                --text-muted: #94A3B8;
+            }}
+
+            body {{
+                margin: 0;
+                padding: 0;
+                background-color: var(--bg-dark);
+                background-image: 
+                    radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+                    radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.15) 0px, transparent 50%);
+                color: var(--text-main);
+                font-family: 'Outfit', sans-serif;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }}
+
+            .container {{
+                max-width: 800px;
+                padding: 3rem;
+                background: var(--glass-bg);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid var(--glass-border);
+                border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                text-align: center;
+                animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            }}
+
+            @keyframes slideUp {{
+                0% {{ opacity: 0; transform: translateY(40px); }}
+                100% {{ opacity: 1; transform: translateY(0); }}
+            }}
+
+            h1 {{
+                font-size: 3.5rem;
+                margin-bottom: 0.5rem;
+                background: linear-gradient(to right, #818CF8, #F43F5E);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                letter-spacing: -0.05em;
+            }}
+
+            p.subtitle {{
+                font-size: 1.25rem;
+                color: var(--text-muted);
+                margin-bottom: 3rem;
+                font-weight: 300;
+            }}
+
+            .action-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1.5rem;
+                margin-bottom: 3rem;
+            }}
+
+            .card {{
+                background: rgba(15, 23, 42, 0.5);
+                border: 1px solid var(--glass-border);
+                border-radius: 16px;
+                padding: 2rem 1.5rem;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                color: var(--text-main);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }}
+
+            .card:hover {{
+                transform: translateY(-5px);
+                background: rgba(30, 41, 59, 0.8);
+                border-color: rgba(129, 140, 248, 0.5);
+                box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
+            }}
+
+            .card-icon {{
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+            }}
+
+            .card-title {{
+                font-size: 1.25rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+            }}
+
+            .card-desc {{
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                line-height: 1.4;
+            }}
+
+            .status-footer {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding-top: 1.5rem;
+                border-top: 1px solid var(--glass-border);
+                font-size: 0.9rem;
+                color: var(--text-muted);
+            }}
+
+            .pulse {{
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                background-color: #10B981;
+                border-radius: 50%;
+                margin-right: 8px;
+                box-shadow: 0 0 10px #10B981;
+                animation: pulse-anim 2s infinite;
+            }}
+
+            @keyframes pulse-anim {{
+                0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }}
+                70% {{ transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }}
+                100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>OpenRescue-Sim</h1>
+            <p class="subtitle">Autonomous Disaster Response Robot Environment v1</p>
+            
+            <div class="action-grid">
+                <a href="/visualize?session_id=default" class="card">
+                    <div class="card-icon">🎯</div>
+                    <div class="card-title">Live Visualization</div>
+                    <div class="card-desc">Watch the agent navigate through extreme environments in real-time.</div>
+                </a>
+                
+                <a href="/docs" class="card">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-title">API Reference</div>
+                    <div class="card-desc">Interact with the Environment Interface via the OpenAPI Specs.</div>
+                </a>
+                
+                <a href="/tasks" class="card">
+                    <div class="card-icon">🧠</div>
+                    <div class="card-title">Task Definitions</div>
+                    <div class="card-desc">View JSON layout of predefined difficulty constraints.</div>
+                </a>
+            </div>
+
+            <div class="status-footer">
+                <div><span class="pulse"></span> System Real-time Online Mode</div>
+                <div id="session-count">Active Sessions: {len(envs)}</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 @app.post("/reset", response_model=RescueObservation)
 async def reset(task_id: str = "easy", session_id: str = "default"):
