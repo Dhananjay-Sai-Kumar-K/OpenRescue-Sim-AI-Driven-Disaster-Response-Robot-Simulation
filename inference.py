@@ -1,14 +1,13 @@
 import os
 import sys
 import json
-import asyncio
 from typing import List, Dict, Any, Optional
-from openai import AsyncOpenAI
+from openai import OpenAI
 from env.base import RescueBotEnv
 from env.models import RescueAction
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY", "dummy_key")
+HF_TOKEN = os.getenv("HF_TOKEN")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 
 BENCHMARK = "RescueBot-v1"
@@ -63,7 +62,7 @@ To grab a victim called 'v1': {"action_type": "grab", "value": 0.0, "target_id":
 
 Think step-by-step, but ONLY output the final JSON block."""
 
-async def get_model_action(client: AsyncOpenAI, step: int, obs: Any, last_reward: float, history: List[Dict[str, str]]) -> str:
+def get_model_action(client: OpenAI, step: int, obs: Any, last_reward: float, history: List[Dict[str, str]]) -> str:
     # Build prompt
     prompt = f"Step: {step}. Last Reward: {last_reward}\n"
     prompt += f"Observation: {obs}\n"
@@ -76,7 +75,7 @@ async def get_model_action(client: AsyncOpenAI, step: int, obs: Any, last_reward
     ]
 
     try:
-        response = await client.chat.completions.create(
+        response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=messages,
             temperature=0.0
@@ -92,8 +91,8 @@ async def get_model_action(client: AsyncOpenAI, step: int, obs: Any, last_reward
         print(f"[DEBUG] OpenAI API Exception: {e}", file=sys.stderr)
         return '{"action_type": "scan", "value": 0.0}'
 
-async def run_task(task_id: str):
-    client = AsyncOpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+def run_task(task_id: str):
+    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
     env = RescueBotEnv(task_id=task_id)
 
     history: List[Dict[str, str]] = []
@@ -112,7 +111,7 @@ async def run_task(task_id: str):
             if env.done:
                 break
 
-            action_str = await get_model_action(client, step, obs.dict(), last_reward, history)
+            action_str = get_model_action(client, step, obs.dict(), last_reward, history)
             
             error = None
             reward = 0.0
@@ -155,11 +154,11 @@ async def run_task(task_id: str):
     finally:
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
-async def main():
+def main():
     target_tasks = ["easy", "medium", "hard"]
     for t in target_tasks:
         print(f"\n[DEBUG] Running Baseline for Task: {t}")
-        await run_task(t)
+        run_task(t)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
