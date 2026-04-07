@@ -16,4 +16,13 @@ jobs:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://DSK005:$HF_TOKEN@huggingface.co/spaces/DSK005/OpenRescue-Sim main
+        run: |
+          rm -rf .git
+          git init
+          git lfs install
+          # ensure .gitattributes is tracked
+          git add .
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git commit -m "Sync to Hugging Face"
+          git push --force https://DSK005:$HF_TOKEN@huggingface.co/spaces/DSK005/OpenRescue-Sim master:main
