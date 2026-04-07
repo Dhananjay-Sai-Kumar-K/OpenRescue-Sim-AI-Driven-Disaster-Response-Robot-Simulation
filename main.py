@@ -256,6 +256,51 @@ async def grader(session_id: str = "default"):
     return {"score": score, "task": env.task_id}
 
 from fastapi.responses import HTMLResponse
+import asyncio
+
+demo_task = None
+
+@app.post("/start_demo")
+async def start_demo(task_id: str = "easy"):
+    global demo_task
+    if demo_task is not None:
+        demo_task.cancel()
+    
+    envs["default"] = RescueBotEnv(task_id=task_id)
+    envs["default"].reset()
+    
+    async def run_agent():
+        try:
+            from stable_baselines3 import PPO
+            from env.gym_wrapper import RescueBotGym
+            
+            model_path = f"models/rescue_bot_ppo_{task_id}.zip"
+            if not os.path.exists(model_path):
+                print(f"No model found for {task_id}")
+                return
+                
+            model = PPO.load(model_path)
+            gym_env = RescueBotGym(task_id=task_id)
+            gym_env.internal_env = envs["default"]
+            
+            obs, _ = gym_env.reset()
+            done = False
+            
+            while True:  # Loop indefinitely for the demo
+                action, _ = model.predict(obs, deterministic=True)
+                obs, reward, done, truncated, info = gym_env.step(action)
+                await asyncio.sleep(0.1)  # 10 FPS
+                if done:
+                    await asyncio.sleep(2) # Pause before resetting
+                    obs, _ = gym_env.reset()
+                    done = False
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            print(f"Demo error: {e}")
+
+    demo_task = asyncio.create_task(run_agent())
+    return {"status": "started", "task": task_id}
 
 @app.get("/visualize", response_class=HTMLResponse)
 async def visualize(session_id: str = "default"):
@@ -280,11 +325,22 @@ async def visualize(session_id: str = "default"):
                 <span id="battery">Battery: 100%</span>
             </div>
             <canvas id="envCanvas" width="600" height="600"></canvas>
+            
+            <div style="margin-top: 20px; display: flex; gap: 15px;">
+                <button onclick="startDemo('easy')" style="padding: 10px 20px; background: #4caf50; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">▶ Run Easy Task</button>
+                <button onclick="startDemo('medium')" style="padding: 10px 20px; background: #ff9800; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">▶ Run Medium Task</button>
+                <button onclick="startDemo('hard')" style="padding: 10px 20px; background: #f44336; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">▶ Run Hard Task</button>
+            </div>
+
             <script>
                 const canvas = document.getElementById('envCanvas');
                 const ctx = canvas.getContext('2d');
                 const scale = 30; // 20 units * 30 = 600px
                 const sessionId = "{session_id}";
+
+                async function startDemo(taskId) {{
+                    await fetch(`/start_demo?task_id=${{taskId}}`, {{ method: 'POST' }});
+                }}
 
                 async function update() {{
                     try {{
