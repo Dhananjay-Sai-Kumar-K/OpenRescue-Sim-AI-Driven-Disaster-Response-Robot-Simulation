@@ -7,7 +7,7 @@ from env.base import RescueBotEnv
 from env.models import RescueAction
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-HF_TOKEN = os.getenv("HF_TOKEN")
+HF_TOKEN = os.getenv("HF_TOKEN", "dummy_token")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 
 BENCHMARK = "RescueBot-v1"
