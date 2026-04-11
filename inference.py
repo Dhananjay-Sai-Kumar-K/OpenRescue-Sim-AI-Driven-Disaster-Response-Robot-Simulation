@@ -6,7 +6,9 @@ from openai import OpenAI
 from env.base import RescueBotEnv
 from env.models import RescueAction
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+API_BASE_URL = os.getenv("API_BASE_URL")
+if not API_BASE_URL:
+    API_BASE_URL = "https://api.openai.com/v1"
 HF_TOKEN = os.getenv("HF_TOKEN") or "dummy_token"
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 
@@ -62,7 +64,7 @@ To grab a victim called 'v1': {"action_type": "grab", "value": 0.0, "target_id":
 
 Think step-by-step, but ONLY output the final JSON block."""
 
-def get_model_action(client: OpenAI, step: int, obs: Any, last_reward: float, history: List[Dict[str, str]]) -> str:
+def get_model_action(client: Optional[OpenAI], step: int, obs: Any, last_reward: float, history: List[Dict[str, str]]) -> str:
     # Build prompt
     prompt = f"Step: {step}. Last Reward: {last_reward}\n"
     prompt += f"Observation: {obs}\n"
@@ -75,6 +77,8 @@ def get_model_action(client: OpenAI, step: int, obs: Any, last_reward: float, hi
     ]
 
     try:
+        if client is None:
+            raise ValueError("Client is not initialized")
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=messages,
@@ -92,9 +96,6 @@ def get_model_action(client: OpenAI, step: int, obs: Any, last_reward: float, hi
         return '{"action_type": "scan", "value": 0.0}'
 
 def run_task(task_id: str):
-    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
-    env = RescueBotEnv(task_id=task_id)
-
     history: List[Dict[str, str]] = []
     rewards: List[float] = []
     steps_taken = 0
@@ -102,6 +103,14 @@ def run_task(task_id: str):
     success = False
 
     log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
+
+    try:
+        client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+    except Exception as e:
+        print(f"[DEBUG] OpenAI initialization error: {e}", file=sys.stderr)
+        client = None
+        
+    env = RescueBotEnv(task_id=task_id)
 
     try:
         obs = env.reset()
