@@ -143,7 +143,7 @@ def run_task(task_id: str):
         else:
             final_grade = TaskGrader.score_hard(env)
 
-        score = max(0.0, min(1.0, final_grade))
+        score = max(0.001, min(0.999, final_grade))  # must be strictly (0, 1)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     finally:
