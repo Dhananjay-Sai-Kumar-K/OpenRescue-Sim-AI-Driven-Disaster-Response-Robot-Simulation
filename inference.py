@@ -18,31 +18,13 @@ SUCCESS_SCORE_THRESHOLD = 0.5
 MAX_TOTAL_REWARD = 100.0  # approximate scaling factor
 
 def log_start(task: str, env: str, model: str):
-    print(json.dumps({
-        "type": "[START]",
-        "task": task,
-        "env": env,
-        "model": model
-    }), flush=True)
+    print(f"[START] task={task} env={env} model={model}", flush=True)
 
 def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str] = None):
-    print(json.dumps({
-        "type": "[STEP]",
-        "step": step,
-        "action": action,
-        "reward": reward,
-        "done": done,
-        "error": error
-    }), flush=True)
+    print(f"[STEP] step={step} action={action} reward={reward} done={done} error={error}", flush=True)
 
-def log_end(success: bool, steps: int, score: float, rewards: List[float]):
-    print(json.dumps({
-        "type": "[END]",
-        "success": success,
-        "steps": steps,
-        "score": score,
-        "rewards": rewards
-    }), flush=True)
+def log_end(task: str, success: bool, steps: int, score: float, rewards: List[float]):
+    print(f"[END] task={task} success={success} steps={steps} score={score} rewards={rewards}", flush=True)
 
 def get_system_prompt() -> str:
     return """You are the AI brain of RescueBot designed for disaster rescue.
@@ -161,7 +143,7 @@ def run_task(task_id: str):
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     finally:
-        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+        log_end(task=task_id, success=success, steps=steps_taken, score=score, rewards=rewards)
 
 def main():
     target_tasks = ["easy", "medium", "hard"]
