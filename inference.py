@@ -6,12 +6,12 @@ from openai import OpenAI
 from env.base import RescueBotEnv
 from env.models import RescueAction
 
-# Fetch exactly the env vars the validator injects — no hardcoded fallbacks
-API_BASE_URL = os.environ.get("API_BASE_URL")
-API_KEY = os.environ.get("API_KEY")
+# Fetch exactly the env vars the validator injects — no hardcoded URL bypass
+API_BASE_URL = os.environ.get("API_BASE_URL")  # None if not injected
+API_KEY = os.environ.get("API_KEY")            # None if not injected
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o")
 
-# Warn clearly if credentials are missing (shows up in validator logs)
+# Warn clearly if credentials are missing (shows in validator logs)
 if not API_BASE_URL or not API_KEY:
     print(f"[ERROR] Missing credentials! Base: {API_BASE_URL}, Key: {'set' if API_KEY else 'missing'}", flush=True)
 
@@ -89,8 +89,13 @@ def run_task(task_id: str):
 
     log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
-    # Initialize using the injected proxy vars — no fallback, no silent suppression
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    # Build client kwargs — only include base_url if injected (avoids passing None to old openai lib)
+    # api_key must be a non-None string for Python 3.9 openai lib; use placeholder if not injected
+    _client_kwargs = {"api_key": API_KEY if API_KEY else "not-provided"}
+    if API_BASE_URL:
+        _client_kwargs["base_url"] = API_BASE_URL
+    print(f"[DEBUG] client base_url={'proxy' if API_BASE_URL else 'default'} api_key={'set' if API_KEY else 'placeholder'}", file=sys.stderr, flush=True)
+    client = OpenAI(**_client_kwargs)
     env = RescueBotEnv(task_id=task_id)
 
     try:
