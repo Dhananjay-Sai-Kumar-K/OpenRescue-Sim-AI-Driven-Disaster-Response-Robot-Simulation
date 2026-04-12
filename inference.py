@@ -9,7 +9,7 @@ from env.models import RescueAction
 API_BASE_URL = os.getenv("API_BASE_URL")
 if not API_BASE_URL:
     API_BASE_URL = "https://api.openai.com/v1"
-HF_TOKEN = os.getenv("HF_TOKEN") or "dummy_token"
+API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN") or "dummy_token"
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 
 BENCHMARK = "RescueBot-v1"
@@ -87,7 +87,7 @@ def run_task(task_id: str):
     log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
     try:
-        client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+        client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
     except Exception as e:
         print(f"[DEBUG] OpenAI initialization error: {e}", file=sys.stderr)
         client = None
