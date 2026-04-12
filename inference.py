@@ -6,11 +6,14 @@ from openai import OpenAI
 from env.base import RescueBotEnv
 from env.models import RescueAction
 
-API_BASE_URL = os.getenv("API_BASE_URL")
-if not API_BASE_URL:
-    API_BASE_URL = "https://api.openai.com/v1"
-API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN") or "dummy_token"
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+# Fetch exactly the env vars the validator injects — no hardcoded fallbacks
+API_BASE_URL = os.environ.get("API_BASE_URL")
+API_KEY = os.environ.get("API_KEY")
+MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o")
+
+# Warn clearly if credentials are missing (shows up in validator logs)
+if not API_BASE_URL or not API_KEY:
+    print(f"[ERROR] Missing credentials! Base: {API_BASE_URL}, Key: {'set' if API_KEY else 'missing'}", flush=True)
 
 BENCHMARK = "RescueBot-v1"
 MAX_STEPS = 50
@@ -86,12 +89,8 @@ def run_task(task_id: str):
 
     log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
-    try:
-        client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-    except Exception as e:
-        print(f"[DEBUG] OpenAI initialization error: {e}", file=sys.stderr)
-        client = None
-        
+    # Initialize using the injected proxy vars — no fallback, no silent suppression
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
     env = RescueBotEnv(task_id=task_id)
 
     try:
